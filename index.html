@@ -1,0 +1,789 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SAP MM Academy | أكاديمية إدارة المواد</title>
+  <link rel="manifest" href="manifest.json">
+  <!-- خط Cairo للغة العربية و Inter للإنجليزية -->
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+  <!-- Tailwind CSS via CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Cairo', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace'],
+          },
+          colors: {
+            sapBlue: '#0a6ed1',
+            sapDark: '#1d2d3e',
+            sapGold: '#f0ab00',
+            sapGui: '#dce6f2'
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body { font-family: 'Cairo', sans-serif; background-color: #f4f6f9; }
+    .ltr-code { direction: ltr; display: inline-block; font-family: 'JetBrains Mono', monospace; }
+    .active-tab { color: #0a6ed1; border-bottom: 3px solid #0a6ed1; font-weight: 700; }
+    @media (max-width: 768px) {
+      .active-tab { border-bottom: none; border-top: 3px solid #0a6ed1; background-color: #f0f7ff; }
+    }
+  </style>
+</head>
+<body class="text-slate-800 pb-20 md:pb-8">
+
+  <!-- الشريط العلوي (Header) -->
+  <header class="bg-sapDark text-white sticky top-0 z-40 shadow-md">
+    <div class="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="bg-sapBlue p-2 rounded-lg text-white font-mono font-bold text-lg">MM</div>
+        <div>
+          <h1 class="font-bold text-lg leading-tight">SAP MM Academy</h1>
+          <p class="text-xs text-slate-300">Materials Management • عربي / EN</p>
+        </div>
+      </div>
+
+      <!-- شريط التقدم المصغر -->
+      <div class="flex items-center gap-4">
+        <div class="hidden sm:flex flex-col items-end">
+          <div class="text-xs text-slate-300 mb-1">الإنجاز الكلي: <span id="headerProgressText" class="font-bold text-sapGold">0%</span></div>
+          <div class="w-32 bg-slate-700 h-2 rounded-full overflow-hidden">
+            <div id="headerProgressBar" class="bg-sapGold h-full transition-all duration-300" style="width: 0%"></div>
+          </div>
+        </div>
+        <button onclick="switchTab('progress')" class="bg-slate-700 hover:bg-slate-600 text-xs px-3 py-2 rounded-lg flex items-center gap-2 transition">
+          <i class="fa-solid fa-chart-pie text-sapGold"></i>
+          <span class="hidden sm:inline">تقدمي</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- قائمة التنقل للحاسوب (Desktop Nav) -->
+    <nav class="hidden md:block bg-white text-slate-700 border-b border-slate-200">
+      <div class="max-w-6xl mx-auto px-4 flex gap-6 text-sm">
+        <button onclick="switchTab('lessons')" id="nav-lessons" class="py-3 px-2 flex items-center gap-2 active-tab">
+          <i class="fa-solid fa-book-open"></i> الدروس (Lessons)
+        </button>
+        <button onclick="switchTab('tcodes')" id="nav-tcodes" class="py-3 px-2 flex items-center gap-2">
+          <i class="fa-solid fa-terminal"></i> أكواد المعاملات (T-Codes)
+        </button>
+        <button onclick="switchTab('screens')" id="nav-screens" class="py-3 px-2 flex items-center gap-2">
+          <i class="fa-solid fa-desktop"></i> محاكي الشاشات (SAP Screens)
+        </button>
+        <button onclick="switchTab('qcm')" id="nav-qcm" class="py-3 px-2 flex items-center gap-2">
+          <i class="fa-solid fa-circle-question"></i> الاختبارات (QCM)
+        </button>
+        <button onclick="switchTab('progress')" id="nav-progress" class="py-3 px-2 flex items-center gap-2">
+          <i class="fa-solid fa-award"></i> التقدم والنسخ الاحتياطي
+        </button>
+      </div>
+    </nav>
+  </header>
+
+  <!-- المحتوى الرئيسي -->
+  <main class="max-w-6xl mx-auto px-4 py-6">
+
+    <!-- 1. قسم الدروس (LESSONS) -->
+    <section id="sec-lessons" class="space-y-6">
+      <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <div>
+          <h2 class="text-xl font-bold text-sapDark">المنهج التدريبي لوحدة إدارة المواد (SAP MM Curriculum)</h2>
+          <p class="text-sm text-slate-600 mt-1">شرح مزدوج باللغة العربية الفصحى مع المصطلحات التقنية الإنجليزية المعتمدة في النظام.</p>
+        </div>
+        <select id="lessonLevelFilter" onchange="renderLessons()" class="bg-slate-100 border border-slate-300 text-sm rounded-lg px-3 py-2 outline-none">
+          <option value="all">جميع المستويات (All Levels)</option>
+          <option value="أساسي">مستوى أساسي (Foundation)</option>
+          <option value="متوسط">مستوى متوسط (Procure-to-Pay)</option>
+          <option value="متقدم">مستوى متقدم (Inventory & Config)</option>
+        </select>
+      </div>
+
+      <div id="lessonsContainer" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+    </section>
+
+    <!-- 2. قسم أكواد المعاملات (TCODES) -->
+    <section id="sec-tcodes" class="hidden space-y-6">
+      <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200">
+        <h2 class="text-xl font-bold text-sapDark mb-3">قاموس أكواد المعاملات (SAP MM T-Codes Dictionary)</h2>
+        <div class="flex flex-col sm:flex-row gap-3">
+          <div class="relative flex-1">
+            <i class="fa-solid fa-magnifying-glass absolute right-3 top-3 text-slate-400"></i>
+            <input type="text" id="tcodeSearch" oninput="renderTcodes()" placeholder="ابحث بالكود (مثل ME21N، MIGO) أو بالوصف العربي أو الإنجليزي..." class="w-full pr-10 pl-4 py-2 border border-slate-300 rounded-lg text-sm outline-none focus:border-sapBlue">
+          </div>
+          <select id="tcodeCatFilter" onchange="renderTcodes()" class="bg-slate-100 border border-slate-300 text-sm rounded-lg px-4 py-2 outline-none">
+            <option value="all">كل الأقسام (All Categories)</option>
+            <option value="Master Data">البيانات الأساسية (Master Data)</option>
+            <option value="Purchasing">المشتريات (Purchasing)</option>
+            <option value="Inventory">إدارة المخزون (Inventory Mgmt)</option>
+            <option value="Invoice">الفواتير (Invoice Verification)</option>
+          </select>
+        </div>
+      </div>
+
+      <div id="tcodesContainer" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+    </section>
+
+    <!-- 3. قسم محاكي الشاشات (SCREENS SIMULATOR) -->
+    <section id="sec-screens" class="hidden space-y-6">
+      <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200">
+        <h2 class="text-xl font-bold text-sapDark">محاكي شاشات SAP التفاعلي (Interactive SAP GUI Simulator)</h2>
+        <p class="text-sm text-slate-600 mt-1">اختر شاشة أو اكتب الـ T-Code في شريط الأوامر، ثم <strong>اضغط على أي حقل أصفر أو أزرق</strong> داخل الشاشة لقراءة شرحه التفصيلي.</p>
+        
+        <div class="flex flex-wrap gap-2 mt-4">
+          <button onclick="loadScreen('ME21N')" class="bg-sapBlue text-white text-xs px-3 py-2 rounded font-mono hover:opacity-90">ME21N (Purchase Order)</button>
+          <button onclick="loadScreen('MIGO')" class="bg-sapDark text-white text-xs px-3 py-2 rounded font-mono hover:opacity-90">MIGO (Goods Movement)</button>
+          <button onclick="loadScreen('MM01')" class="bg-slate-700 text-white text-xs px-3 py-2 rounded font-mono hover:opacity-90">MM01 (Material Master)</button>
+        </div>
+      </div>
+
+      <!-- نافذة SAP GUI المحاكاة -->
+      <div class="border-2 border-slate-400 rounded-lg overflow-hidden shadow-lg bg-[#e8eef5]">
+        <!-- شريط SAP العلوي -->
+        <div class="bg-[#2c3e50] text-white px-4 py-2 flex flex-wrap items-center justify-between gap-2 text-xs">
+          <div class="flex items-center gap-2">
+            <span class="bg-sapGold text-black font-bold px-2 py-0.5 rounded font-mono">SAP</span>
+            <span id="simScreenTitle" class="font-bold text-sm">Create Purchase Order (ME21N)</span>
+          </div>
+          <div class="flex items-center gap-2" dir="ltr">
+            <span class="text-slate-300">Command:</span>
+            <input type="text" id="sapCommandInput" value="/nME21N" onkeydown="if(event.key==='Enter') runCommand()" class="bg-white text-black font-mono px-2 py-1 rounded w-28 text-xs outline-none">
+            <button onclick="runCommand()" class="bg-emerald-600 hover:bg-emerald-500 px-2 py-1 rounded text-white font-bold">✔ Enter</button>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3">
+          <!-- مساحة الحقول التفاعلية -->
+          <div id="simFieldsArea" class="lg:col-span-2 p-4 space-y-4 border-b lg:border-b-0 lg:border-l border-slate-300"></div>
+
+          <!-- لوحة شرح الحقل المختار -->
+          <div class="bg-white p-5 flex flex-col justify-between">
+            <div>
+              <div class="text-xs font-bold text-sapBlue uppercase tracking-wider mb-1">دليل الحقول التفاعلي (Field Inspector)</div>
+              <h3 id="fieldInspectTitle" class="text-lg font-bold text-sapDark border-b pb-2">اضغط على أي حقل في الشاشة</h3>
+              <div id="fieldInspectBody" class="mt-3 text-sm text-slate-700 space-y-3 leading-relaxed">
+                <p>نظراً لمحدودية الوصول لنظام SAP، صُمم هذا المحاكي ليمثل الهيكل الفعلي للشاشات القياسية (Header / Item Overview / Item Details).</p>
+                <p class="bg-amber-50 border-r-4 border-sapGold p-3 text-xs text-slate-800">💡 <strong>نصيحة:</strong> انقر على أي مربع حقل داخل المحاكي لمعرفة معناه، هل هو إجباري أم اختياري، ومن أين يستمد النظام بياناته.</p>
+              </div>
+            </div>
+            <div class="mt-6 pt-3 border-t text-xs text-slate-400 flex justify-between font-mono" dir="ltr">
+              <span>System: S4H (Client 100)</span>
+              <span id="simActiveTcode">TCODE: ME21N</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 4. قسم الاختبارات (QCM) -->
+    <section id="sec-qcm" class="hidden space-y-6">
+      <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div>
+          <h2 class="text-xl font-bold text-sapDark">بنك الأسئلة والاختبارات (SAP MM Certification QCM)</h2>
+          <p class="text-sm text-slate-600 mt-1">اختبر فهمك للمفاهيم وسيناريوهات العمل الحقيقية مع تصحيح فوري وتعليل للإجابة.</p>
+        </div>
+        <div class="bg-blue-50 border border-blue-200 px-4 py-2 rounded-lg text-sm">
+          النتيجة الحالية: <span id="qcmScoreBadge" class="font-bold text-sapBlue">0 / 0</span>
+        </div>
+      </div>
+
+      <div id="qcmContainer" class="space-y-4"></div>
+    </section>
+
+    <!-- 5. قسم التقدم والنسخ الاحتياطي (PROGRESS) -->
+    <section id="sec-progress" class="hidden space-y-6">
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200">
+          <div class="text-slate-500 text-xs font-bold">الدروس المكتملة (Lessons)</div>
+          <div id="statLessons" class="text-3xl font-extrabold text-sapBlue mt-2">0 / 0</div>
+          <p class="text-xs text-slate-500 mt-1">يتم الحفظ تلقائياً في متصفحك</p>
+        </div>
+        <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200">
+          <div class="text-slate-500 text-xs font-bold">الأسئلة المجابة بشكل صحيح (QCM)</div>
+          <div id="statQcm" class="text-3xl font-extrabold text-emerald-600 mt-2">0 / 0</div>
+          <p class="text-xs text-slate-500 mt-1">دقة الإجابات في الاختبارات</p>
+        </div>
+        <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200">
+          <div class="text-slate-500 text-xs font-bold">الأكواد المحفوظة للمراجعة (Saved T-Codes)</div>
+          <div id="statTcodes" class="text-3xl font-extrabold text-sapGold mt-2">0</div>
+          <p class="text-xs text-slate-500 mt-1">الأكواد المميزة بنجمة ⭐</p>
+        </div>
+      </div>
+
+      <!-- مزامنة التقدم بين الهاتف والحاسوب بدون سيرفر -->
+      <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 space-y-4">
+        <h3 class="text-lg font-bold text-sapDark">نقل التقدم بين الهاتف والحاسوب (مجاناً بدون خادم)</h3>
+        <p class="text-sm text-slate-600">بما أن المنصة تعمل بملف واحد وميزانية 0 درهم، تُحفظ بياناتك في ذاكرة الجهاز (`localStorage`). لنقل تقدمك من الحاسوب إلى الهاتف أو العكس، انسخ كود التقدم أدناه أو الصقه:</p>
+        
+        <div class="flex flex-wrap gap-3">
+          <button onclick="exportProgress()" class="bg-sapBlue text-white text-sm px-4 py-2 rounded-lg hover:opacity-90 flex items-center gap-2">
+            <i class="fa-solid fa-copy"></i> نسخ كود التقدم (Export)
+          </button>
+          <button onclick="importProgress()" class="bg-slate-800 text-white text-sm px-4 py-2 rounded-lg hover:opacity-90 flex items-center gap-2">
+            <i class="fa-solid fa-file-import"></i> استيراد كود التقدم (Import)
+          </button>
+          <button onclick="resetProgress()" class="bg-red-50 text-red-600 border border-red-200 text-sm px-4 py-2 rounded-lg hover:bg-red-100 mr-auto">
+            <i class="fa-solid fa-trash-can"></i> تصفير التقدم
+          </button>
+        </div>
+        <textarea id="backupJsonBox" rows="3" dir="ltr" placeholder='اضغط "نسخ كود التقدم" أو الصق الكود هنا للاستيراد...' class="w-full p-3 border border-slate-300 rounded-lg font-mono text-xs bg-slate-50"></textarea>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- نافذة قراءة الدرس التفصيلي (Lesson Modal) -->
+  <div id="lessonModal" class="fixed inset-0 bg-black/60 z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-2xl w-full max-h-[85vh] flex flex-col overflow-hidden shadow-2xl">
+      <div class="bg-sapDark text-white px-5 py-4 flex justify-between items-center">
+        <h3 id="modalTitle" class="font-bold text-lg">عنوان الدرس</h3>
+        <button onclick="closeLessonModal()" class="text-slate-300 hover:text-white text-xl">&times;</button>
+      </div>
+      <div id="modalBody" class="p-6 overflow-y-auto space-y-4 text-sm leading-relaxed text-slate-700"></div>
+      <div class="bg-slate-100 px-5 py-3 border-t flex justify-between items-center">
+        <button id="modalCompleteBtn" class="bg-emerald-600 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-emerald-500">
+          ✔ تحديد كمكتمل
+        </button>
+        <button onclick="closeLessonModal()" class="text-slate-600 text-sm px-4 py-2 hover:bg-slate-200 rounded-lg">إغلاق</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- شريط التنقل السفلي للهاتف (Mobile Bottom Bar) -->
+  <nav class="md:hidden fixed bottom-0 inset-x-0 bg-white border-t border-slate-200 grid grid-cols-5 text-xs z-40 shadow-lg">
+    <button onclick="switchTab('lessons')" id="mnav-lessons" class="py-2.5 flex flex-col items-center gap-1 active-tab">
+      <i class="fa-solid fa-book-open text-base"></i><span>الدروس</span>
+    </button>
+    <button onclick="switchTab('tcodes')" id="mnav-tcodes" class="py-2.5 flex flex-col items-center gap-1 text-slate-500">
+      <i class="fa-solid fa-terminal text-base"></i><span>T-Codes</span>
+    </button>
+    <button onclick="switchTab('screens')" id="mnav-screens" class="py-2.5 flex flex-col items-center gap-1 text-slate-500">
+      <i class="fa-solid fa-desktop text-base"></i><span>الشاشات</span>
+    </button>
+    <button onclick="switchTab('qcm')" id="mnav-qcm" class="py-2.5 flex flex-col items-center gap-1 text-slate-500">
+      <i class="fa-solid fa-circle-question text-base"></i><span>اختبار</span>
+    </button>
+    <button onclick="switchTab('progress')" id="mnav-progress" class="py-2.5 flex flex-col items-center gap-1 text-slate-500">
+      <i class="fa-solid fa-award text-base"></i><span>تقدمي</span>
+    </button>
+  </nav>
+
+  <!-- محرك البيانات والبرمجة (JavaScript Engine) -->
+  <script>
+    // 1. قاعدة البيانات المدمجة (قابلة للتوسيع بسهولة)
+    const sapData = {
+      lessons: [
+        {
+          id: "L1",
+          title: "الهيكل التنظيمي في إدارة المواد (Enterprise Structure in MM)",
+          level: "أساسي",
+          duration: "15 دقيقة",
+          terms: ["Client", "Company Code", "Plant", "Storage Location", "Purchasing Org"],
+          summary: "فهم المستويات التنظيمية من أعلى مستوى (Client) إلى المخزن الفرعي (Storage Location) وكيف ترتبط ببعضها.",
+          content: `
+            <p>يتكون <strong>الهيكل التنظيمي (Organizational Structure)</strong> في SAP MM من وحدات هرمية تعكس واقع الشركة القانوني واللوجستي:</p>
+            <ul class="list-disc pr-5 space-y-2">
+              <li><strong>العميل (Client):</strong> أعلى مستوى في النظام (مثل Client 100)، يمثل المجموعة القابضة بالكامل.</li>
+              <li><strong>كود الشركة (Company Code):</strong> وحدة محاسبية مستقلة قانونياً تُصدر القوائم المالية (الميزانية وحساب الأرباح والخسائر).</li>
+              <li><strong>المصنع أو الفرع (Plant):</strong> وحدة تشغيلية يتم فيها الإنتاج أو تخزين المواد وتقييم المخزون (Valuation Area).</li>
+              <li><strong>موقع التخزين (Storage Location - SLoc):</strong> المكان الفعلي داخل الـ Plant الذي تُحفظ فيه البضائع مادياً.</li>
+              <li><strong>منظمة المشتريات (Purchasing Organization):</strong> الوحدة المسؤولة عن التفاوض مع الموردين وإبرام عقود الشراء.</li>
+            </ul>
+            <div class="bg-blue-50 p-3 rounded-lg border-r-4 border-sapBlue mt-3">
+              <strong>قاعدة ذهبية:</strong> يمكن لـ Company Code واحد أن يضم عدة Plants، ويمكن للـ Plant الواحد أن يضم عدة Storage Locations، لكن لا يمكن لـ Storage Location واحد أن يتبع لأكثر من Plant.
+            </div>
+          `
+        },
+        {
+          id: "L2",
+          title: "البيانات الأساسية: سجل المواد والموردين (Master Data: Material & BP)",
+          level: "أساسي",
+          duration: "20 دقيقة",
+          terms: ["Material Master", "Material Type (ROH, HALB, FERT)", "Business Partner (BP)", "Purchasing Info Record"],
+          summary: "كيفية تعريف المواد والموردين في النظام، وأهمية الـ Views داخل شاشة MM01.",
+          content: `
+            <p>تُعد <strong>البيانات الأساسية (Master Data)</strong> العمود الفقري لأي عملية في SAP؛ بدونها لا يمكنك إنشاء طلب شراء أو استلام بضاعة:</p>
+            <h4 class="font-bold text-sapDark mt-2">1. سجل المادة (Material Master - MM01):</h4>
+            <p>ينقسم إلى شاشات فرعية تسمى <strong>Views</strong> حسب القسم المستفيد:</p>
+            <ul class="list-disc pr-5 space-y-1">
+              <li><span class="ltr-code font-bold">Basic Data 1 & 2</span>: وحدة القياس الأساسية (Base Unit of Measure)، الوصف، ومجموعة المواد (Material Group). (على مستوى Client).</li>
+              <li><span class="ltr-code font-bold">Purchasing View</span>: مجموعة المشتريات (Purchasing Group) وتسامح التسليم. (على مستوى Plant).</li>
+              <li><span class="ltr-code font-bold">Accounting 1</span>: فئة التقييم (Valuation Class) وطريقة التسعير: سعر قياسي (Standard Price - S) أو متوسط مرجح متحرك (Moving Average Price - V).</li>
+            </ul>
+            <h4 class="font-bold text-sapDark mt-3">2. أنواع المواد القياسية (Standard Material Types):</h4>
+            <p><span class="ltr-code bg-slate-200 px-1 rounded">ROH</span> مواد خام • <span class="ltr-code bg-slate-200 px-1 rounded">HALB</span> نصف مصنعة • <span class="ltr-code bg-slate-200 px-1 rounded">FERT</span> منتج تام • <span class="ltr-code bg-slate-200 px-1 rounded">HAWA</span> بضاعة تجارية.</p>
+          `
+        },
+        {
+          id: "L3",
+          title: "دورة المشتريات الكاملة من الطلب إلى الدفع (Procure-to-Pay / P2P Cycle)",
+          level: "متوسط",
+          duration: "25 دقيقة",
+          terms: ["Purchase Requisition (ME51N)", "Purchase Order (ME21N)", "Goods Receipt (MIGO)", "Invoice Verification (MIRO)"],
+          summary: "تتبع رحلة الشراء خطوة بخطوة والقيود المحاسبية الناتجة في الخلفية (FI Integration).",
+          content: `
+            <p>تمر دورة الشراء القياسية <strong>Procure-to-Pay (P2P)</strong> بخمس مراحل مترابطة:</p>
+            <ol class="list-decimal pr-5 space-y-2">
+              <li><strong>طلب احتياج داخلي (Purchase Requisition - PR | ME51N):</strong> مستند داخلي يطلبه قسم الإنتاج أو المخازن لإبلاغ قسم المشتريات بالحاجة لمادة معينة (لا يولد قيداً محاسبياً).</li>
+              <li><strong>أمر الشراء (Purchase Order - PO | ME21N):</strong> مستند رسمي وقانوني يُرسل للمورد يحدد الكميات والأسعار وموعد التسليم (لا يولد قيداً محاسبياً).</li>
+              <li><strong>إذن استلام البضاعة (Goods Receipt - GR | MIGO 101):</strong> استلام فعلي للمواد في المخزن. <strong>يولد قيداً محاسبياً:</strong> من ح/ المخزون (Inventory BSX) إلى ح/ وسيط استلام البضاعة والفواتير (GR/IR Clearing Account WRX).</li>
+              <li><strong>مراجعة الفاتورة (Invoice Verification | MIRO):</strong> مطابقة ثلاثية (3-Way Match) بين الـ PO والـ GR وفاتورة المورد. <strong>يولد قيداً محاسبياً:</strong> من ح/ وسيط (GR/IR) إلى ح/ المورد (Vendor Account).</li>
+              <li><strong>سداد الدفعة (Outgoing Payment | F-53 / F110):</strong> يتم في وحدة المالية (FI).</li>
+            </ol>
+          `
+        },
+        {
+          id: "L4",
+          title: "حركات المخزون وأنواع الحركة (Inventory Management & Movement Types)",
+          level: "متقدم",
+          duration: "20 دقيقة",
+          terms: ["MIGO", "Movement Type 101 / 103 / 105", "201 / 261", "311 / 301", "Stock Types"],
+          summary: "كيف يتحكم كود الحركة المكون من 3 أرقام في تحديث الكميات والحسابات المحاسبية تلقائياً.",
+          content: `
+            <p>يُعد <strong>نوع الحركة (Movement Type)</strong> مفتاحاً مكوناً من 3 أرقام يخبر نظام SAP بنوع العملية المخزنية وكيف يؤثر على الحسابات:</p>
+            <ul class="list-disc pr-5 space-y-2">
+              <li><span class="ltr-code font-bold text-emerald-700">101</span>: استلام بضاعة مقابل أمر شراء (Goods Receipt for PO) إلى المخزون الحر (Unrestricted Stock).</li>
+              <li><span class="ltr-code font-bold text-amber-700">103</span>: استلام بضاعة إلى مخزون محجوز للفحص (GR to Blocked Stock) - لا يولد قيداً مالياً حتى الإفراج عنها بكود <span class="ltr-code font-bold">105</span>.</li>
+              <li><span class="ltr-code font-bold text-red-700">122</span>: إرجاع بضاعة معيبة للمورد (Return Delivery to Vendor).</li>
+              <li><span class="ltr-code font-bold text-blue-700">201</span>: صرف مواد لمركز تكلفة (Goods Issue to Cost Center).</li>
+              <li><span class="ltr-code font-bold text-blue-700">261</span>: صرف مواد لأمر إنتاج (Goods Issue to Production Order).</li>
+              <li><span class="ltr-code font-bold text-purple-700">311</span>: تحويل مخزني بين موقعي تخزين (SLoc to SLoc) داخل نفس المصنع (Plant).</li>
+            </ul>
+          `
+        }
+      ],
+
+      tcodes: [
+        { code: "MM01", nameEn: "Create Material Master", nameAr: "إنشاء سجل مادة جديد", cat: "Master Data", tip: "استخدم MM02 للتعديل و MM03 للعرض فقط." },
+        { code: "MM60", nameEn: "Materials List", nameAr: "تقرير قائمة المواد وأسعارها", cat: "Master Data", tip: "يعرض المواد مع Valuation Class والسعر." },
+        { code: "BP", nameEn: "Maintain Business Partner", nameAr: "إدارة شريك الأعمال (الموردين)", cat: "Master Data", tip: "استبدل أكواد XK01/MK01 القديمة في نظام S/4HANA." },
+        { code: "ME11", nameEn: "Create Purchasing Info Record", nameAr: "إنشاء سجل معلومات شراء (مادة + مورد)", cat: "Master Data", tip: "يربط المادة بالمورد لحفظ آخر سعر وشروط التوريد." },
+        { code: "ME51N", nameEn: "Create Purchase Requisition", nameAr: "إنشاء طلب شراء داخلي (PR)", cat: "Purchasing", tip: "مستند داخلي لا يخرج للمورد." },
+        { code: "ME21N", nameEn: "Create Purchase Order", nameAr: "إنشاء أمر شراء رسمي (PO)", cat: "Purchasing", tip: "يمكن إنشاؤه بالمرجعية إلى PR لتوفير الوقت." },
+        { code: "ME2N", nameEn: "Purchase Orders by PO Number", nameAr: "تقرير أوامر الشراء وحالة التوريد", cat: "Purchasing", tip: "استخدم معامل الاختيار WE101 لمعرفة الأوامر التي لم تُستلم بعد." },
+        { code: "MIGO", nameEn: "Goods Movement (GR / GI / Transfer)", nameAr: "حركات المخزون (استلام / صرف / تحويل)", cat: "Inventory", tip: "الشاشة المركزية لكافة حركات أمين المستودع." },
+        { code: "MB51", nameEn: "Material Document List", nameAr: "سجل حركات المادة (كشف حساب مخزني)", cat: "Inventory", tip: "يعرض كل حركات الدخول والخروج بالتاريخ والمستخدم." },
+        { code: "MMBE", nameEn: "Stock Overview", nameAr: "نظرة شاملة على أرصدة المخزون", cat: "Inventory", tip: "يفصل الرصيد إلى: Unrestricted, Quality Inspection, Blocked." },
+        { code: "MI01", nameEn: "Create Physical Inventory Doc", nameAr: "إنشاء مستند جرد فعلي للمخزون", cat: "Inventory", tip: "يتبعها MI04 لإدخال العد الفعلي ثم MI07 لتسوية الفروقات." },
+        { code: "MIRO", nameEn: "Enter Incoming Invoice", nameAr: "تسجيل ومراجعة فاتورة المورد", cat: "Invoice", tip: "يربط قسم المشتريات بقسم الحسابات الدائنة (AP)." }
+      ],
+
+      screens: {
+        "ME21N": {
+          title: "Create Purchase Order (ME21N) - إنشاء أمر شراء",
+          sections: [
+            {
+              secTitle: "1. ترويسة المستند (Header Data)",
+              fields: [
+                { label: "Order Type", val: "NB (Standard PO)", descAr: "نوع مستند أمر الشراء. الكود القياسي في SAP هو NB للمشتريات الخارجية، و UB لأوامر النقل بين الفروع (Stock Transport Order)." },
+                { label: "Vendor / Supplier", val: "100045 (Atlas Tech)", descAr: "رقم المورد المسجل في شاشة BP. بمجرد إدخاله يجلب النظام العملة وشروط الدفع تلقائياً." },
+                { label: "Purch. Org.", val: "1000", descAr: "منظمة المشتريات المسؤولة عن التعاقد. حقل إجباري في الترويسة." },
+                { label: "Purch. Group", val: "001 (Buyers Team A)", descAr: "مجموعة المشتريات (المشتري أو فريق المشتريات المسؤول عن المتابعة)." },
+                { label: "Company Code", val: "1000", descAr: "كود الشركة المحاسبي الذي سيتحمل التكلفة المالية." }
+              ]
+            },
+            {
+              secTitle: "2. جدول الأصناف (Item Overview)",
+              fields: [
+                { label: "Acct Assignment (A)", val: "[فارغ] أو K", descAr: "فئة التوجيه المحاسبي (Account Assignment Category): إذا تُرك فارغاً تذهب المادة للمخزن، وإذا وُضع K تُحمل مباشرة كمصروف على مركز تكلفة (Cost Center)." },
+                { label: "Item Category (I)", val: "[Standard] أو L", descAr: "فئة الصنف: قياسي للبضائع، أو L للتصنيع لدى الغير (Subcontracting)، أو D للخدمات." },
+                { label: "Material", val: "MAT-9001", descAr: "رقم المادة من سجل المواد (MM01). يجلب الوصف ووحدة القياس تلقائياً." },
+                { label: "PO Quantity", val: "150 PC", descAr: "الكمية المطلوبة من المورد مع وحدة القياس (Order Unit)." },
+                { label: "Net Price", val: "85.00 MAD", descAr: "السعر الصافي للوحدة. يتم جلبه تلقائياً من آخر سجل معلومات شراء (Info Record - ME11) إن وجد." },
+                { label: "Plant / SLoc", val: "1000 / 0001", descAr: "المصنع وموقع التخزين اللذان سيستلمان البضاعة عند تنفيذ MIGO." }
+              ]
+            }
+          ]
+        },
+        "MIGO": {
+          title: "Goods Movement (MIGO) - حركة البضائع بالمستودع",
+          sections: [
+            {
+              secTitle: "1. شريط التحكم بالعملية (Action & Reference Bar)",
+              fields: [
+                { label: "Transaction Action", val: "A01 - Goods Receipt", descAr: "العملية المطلوبة: A01 لاستلام بضاعة، A07 لصرف بضاعة (Goods Issue)، A08 لتحويل مخزني (Transfer Posting)." },
+                { label: "Reference Document", val: "R01 - Purchase Order", descAr: "المستند المرجعي: R01 يعني أننا نستلم بناءً على أمر شراء موجود مسبقاً." },
+                { label: "PO Number", val: "4500017892", descAr: "رقم أمر الشراء؛ بمجرد كتابته والضغط على Enter، ينسخ النظام كافة الأصناف والكميات للشاشة." },
+                { label: "Movement Type", val: "101", descAr: "كود الحركة في أعلى اليسار: 101 يعني استلام إلى المخزون الحر المتاح للاستخدام." }
+              ]
+            },
+            {
+              secTitle: "2. تفاصيل الصنف المستلم (Item Detail Tabs)",
+              fields: [
+                { label: "Quantity in Delivery Note", val: "150 PC", descAr: "الكمية الفعلية الموجودة في بوليصة شحن المورد والتي قام أمين المخزن بعدها." },
+                { label: "Where Tab (Plant/SLoc)", val: "Plant 1000 / SLoc 0001", descAr: "تحديد المستودع الفرعي الذي ستدخل إليه البضاعة." },
+                { label: "Item OK CheckBox", val: "[✔] Item OK", descAr: "مربع تأكيد الصنف في أسفل الشاشة؛ لن يسمح لك النظام بعمل Post إلا بعد تفعيل علامة ✔." }
+              ]
+            }
+          ]
+        },
+        "MM01": {
+          title: "Create Material Master (MM01) - تعريف مادة جديدة",
+          sections: [
+            {
+              secTitle: "1. الشاشة الابتدائية (Initial Screen)",
+              fields: [
+                { label: "Industry Sector", val: "M (Mechanical Eng.)", descAr: "قطاع الصناعة؛ يحدد ترتيب ظهور الشاشات والحقول." },
+                { label: "Material Type", val: "ROH (Raw Material)", descAr: "نوع المادة؛ يتحكم في ترقيم الكود (داخلي أم خارجي) وفي الحسابات المحاسبية وأقسام الـ Views المتاحة." }
+              ]
+            },
+            {
+              secTitle: "2. البيانات الأساسية والمحاسبية (Basic & Accounting Views)",
+              fields: [
+                { label: "Base Unit of Measure", val: "PC / KG", descAr: "وحدة القياس الأساسية التي يُقيّم بها المخزون. انتبه: يصعب جداً تغييرها بعد إجراء حركات على المادة!" },
+                { label: "Purchasing Group", val: "001", descAr: "مجموعة المشتريات المسؤولة عن شراء هذا الصنف." },
+                { label: "Valuation Class", val: "3000 (Raw Materials)", descAr: "فئة التقييم المحاسبي؛ هي حلقة الوصل الأهم بين MM و FI لأنها تحدد رقم حساب الأستاذ العام (G/L Account) عند الشراء والصرف." },
+                { label: "Price Control", val: "V (Moving Avg Price)", descAr: "طريقة تسعير المخزون: V للمتوسط المتحرك (شائع في المشتريات)، و S للسعر القياسي الثابت (شائع في التصنيع)." }
+              ]
+            }
+          ]
+        }
+      },
+
+      qcm: [
+        {
+          id: "Q1",
+          q: "أي من المستندات التالية في دورة المشتريات (P2P) يولّد قيداً محاسبياً (Accounting Document) في وحدة المالية FI؟",
+          options: [
+            "طلب الشراء الداخلي (Purchase Requisition - ME51N)",
+            "أمر الشراء الرسمي (Purchase Order - ME21N)",
+            "استلام البضاعة للمخزون الحر (Goods Receipt - MIGO 101)",
+            "طلب عروض الأسعار (Request for Quotation - ME41)"
+          ],
+          correct: 2,
+          explanation: "استلام البضاعة (MIGO 101) لمادة مخزنية يولّد قيداً محاسبياً تلقائياً (مدين: حساب المخزون BSX / دائن: حساب وسيط استلام البضاعة والفواتير GR/IR WRX). أما PR و PO فلا يولدان قيوداً محاسبية."
+        },
+        {
+          id: "Q2",
+          q: "ما هو الحقل الموجود في شاشة المادة (MM01 - Accounting 1 View) والذي يربط وحدة إدارة المواد (MM) بحسابات الأستاذ العام في المالية (FI)؟",
+          options: [
+            "Material Group (مجموعة المواد)",
+            "Purchasing Group (مجموعة المشتريات)",
+            "Valuation Class (فئة التقييم)",
+            "Storage Location (موقع التخزين)"
+          ],
+          correct: 2,
+          explanation: "حقل Valuation Class (فئة التقييم) هو الرابط المباشر في إعدادات الحسابات التلقائية (OBYC) لتحديد أي حساب أستاذ عام (G/L Account) سيتأثر عند حركة المادة."
+        },
+        {
+          id: "Q3",
+          q: "عند شراء قرطاسية مكتبية للاستهلاك المباشر في قسم الإدارة دون إدخالها للمخزن، ما هي فئة التوجيه المحاسبي (Account Assignment Category) المستخدمة في أمر الشراء ME21N؟",
+          options: [
+            "L (Subcontracting)",
+            "K (Cost Center)",
+            "U (Unknown)",
+            "يُترك الحقل فارغاً"
+          ],
+          correct: 1,
+          explanation: "الحرف K يرمز إلى Cost Center (مركز تكلفة)، مما يجعل النظام يحمّل التكلفة مباشرة على حساب المصروفات بدلاً من حساب المخزون عند الاستلام."
+        },
+        {
+          id: "Q4",
+          q: "ما هو كود الحركة (Movement Type) القياسي لتحويل بضاعة بين موقعي تخزين (SLoc to SLoc) داخل نفس المصنع (Plant) في خطوة واحدة؟",
+          options: [
+            "101",
+            "201",
+            "311",
+            "561"
+          ],
+          correct: 2,
+          explanation: "الكود 311 يُستخدم للتحويل المخزني بين مستودعين فرعيين (Storage Locations) داخل نفس الـ Plant في خطوة واحدة دون تأثير محاسبي لأنهما ضمن نفس منطقة التقييم."
+        }
+      ]
+    };
+
+    // 2. إدارة حالة التقدم عبر LocalStorage
+    const STORAGE_KEY = "sap_mm_academy_progress_v1";
+    let userState = JSON.parse(localStorage.getItem(STORAGE_KEY)) || {
+      completedLessons: [],
+      qcmAnswers: {},
+      savedTcodes: []
+    };
+
+    function saveState() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(userState));
+      updateProgressUI();
+    }
+
+    // 3. التنقل بين الأقسام
+    function switchTab(tab) {
+      const tabs = ['lessons', 'tcodes', 'screens', 'qcm', 'progress'];
+      tabs.forEach(t => {
+        document.getElementById(`sec-${t}`).classList.toggle('hidden', t !== tab);
+        const dNav = document.getElementById(`nav-${t}`);
+        const mNav = document.getElementById(`mnav-${t}`);
+        if (dNav) dNav.classList.toggle('active-tab', t === tab);
+        if (mNav) {
+          mNav.classList.toggle('active-tab', t === tab);
+          mNav.classList.toggle('text-slate-500', t !== tab);
+        }
+      });
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    // 4. عرض الدروس (Lessons)
+    function renderLessons() {
+      const filter = document.getElementById('lessonLevelFilter').value;
+      const container = document.getElementById('lessonsContainer');
+      const filtered = sapData.lessons.filter(l => filter === 'all' || l.level === filter);
+
+      container.innerHTML = filtered.map(lesson => {
+        const isDone = userState.completedLessons.includes(lesson.id);
+        return `
+          <div class="bg-white p-5 rounded-xl shadow-sm border ${isDone ? 'border-emerald-400 bg-emerald-50/20' : 'border-slate-200'} flex flex-col justify-between">
+            <div>
+              <div class="flex justify-between items-center mb-2">
+                <span class="text-xs font-bold px-2.5 py-1 rounded bg-blue-100 text-sapBlue">${lesson.level}</span>
+                <span class="text-xs text-slate-400"><i class="fa-regular fa-clock"></i> ${lesson.duration}</span>
+              </div>
+              <h3 class="font-bold text-base text-sapDark mb-2">${lesson.title}</h3>
+              <p class="text-xs text-slate-600 leading-relaxed mb-3">${lesson.summary}</p>
+              <div class="flex flex-wrap gap-1.5 mb-4" dir="ltr">
+                ${lesson.terms.map(t => `<span class="text-[11px] font-mono bg-slate-100 border border-slate-200 px-2 py-0.5 rounded text-slate-700">${t}</span>`).join('')}
+              </div>
+            </div>
+            <div class="flex justify-between items-center pt-3 border-t border-slate-100">
+              <button onclick="openLesson('${lesson.id}')" class="bg-sapBlue text-white text-xs px-4 py-2 rounded-lg font-bold hover:opacity-90">
+                📖 قراءة الدرس
+              </button>
+              <button onclick="toggleLessonDone('${lesson.id}')" class="text-xs font-bold px-3 py-1.5 rounded-lg border ${isDone ? 'bg-emerald-600 text-white border-emerald-600' : 'text-slate-500 border-slate-300 hover:bg-slate-100'}">
+                ${isDone ? '✔ مكتمل' : 'تحديد كمكتمل'}
+              </button>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function openLesson(id) {
+      const lesson = sapData.lessons.find(l => l.id === id);
+      if (!lesson) return;
+      document.getElementById('modalTitle').innerText = lesson.title;
+      document.getElementById('modalBody').innerHTML = lesson.content;
+      const btn = document.getElementById('modalCompleteBtn');
+      const isDone = userState.completedLessons.includes(id);
+      btn.innerText = isDone ? '✔ مكتمل (اضغط للإلغاء)' : '✔ تحديد الدرس كمكتمل';
+      btn.onclick = () => { toggleLessonDone(id); closeLessonModal(); };
+      document.getElementById('lessonModal').classList.remove('hidden');
+    }
+
+    function closeLessonModal() {
+      document.getElementById('lessonModal').classList.add('hidden');
+    }
+
+    function toggleLessonDone(id) {
+      const idx = userState.completedLessons.indexOf(id);
+      if (idx > -1) userState.completedLessons.splice(idx, 1);
+      else userState.completedLessons.push(id);
+      saveState();
+      renderLessons();
+    }
+
+    // 5. عرض قاموس الأكواد (T-Codes)
+    function renderTcodes() {
+      const q = document.getElementById('tcodeSearch').value.trim().toLowerCase();
+      const cat = document.getElementById('tcodeCatFilter').value;
+      const container = document.getElementById('tcodesContainer');
+
+      const filtered = sapData.tcodes.filter(t => {
+        const matchCat = cat === 'all' || t.cat === cat;
+        const matchQ = t.code.toLowerCase().includes(q) || t.nameEn.toLowerCase().includes(q) || t.nameAr.includes(q);
+        return matchCat && matchQ;
+      });
+
+      container.innerHTML = filtered.map(t => {
+        const isSaved = userState.savedTcodes.includes(t.code);
+        return `
+          <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex flex-col justify-between">
+            <div>
+              <div class="flex justify-between items-center mb-2">
+                <span class="font-mono font-bold text-base bg-sapDark text-sapGold px-3 py-1 rounded tracking-wider" dir="ltr">${t.code}</span>
+                <div class="flex items-center gap-2">
+                  <span class="text-[11px] bg-slate-100 text-slate-600 px-2 py-0.5 rounded font-mono">${t.cat}</span>
+                  <button onclick="toggleSaveTcode('${t.code}')" class="text-lg ${isSaved ? 'text-sapGold' : 'text-slate-300 hover:text-slate-400'}">★</button>
+                </div>
+              </div>
+              <h4 class="font-bold text-sm text-slate-800">${t.nameAr}</h4>
+              <p class="text-xs font-mono text-sapBlue mt-0.5" dir="ltr">${t.nameEn}</p>
+            </div>
+            <p class="text-xs text-slate-500 mt-3 pt-2 border-t border-slate-100">💡 ${t.tip}</p>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function toggleSaveTcode(code) {
+      const idx = userState.savedTcodes.indexOf(code);
+      if (idx > -1) userState.savedTcodes.splice(idx, 1);
+      else userState.savedTcodes.push(code);
+      saveState();
+      renderTcodes();
+    }
+
+    // 6. محاكي شاشات SAP GUI
+    function loadScreen(code) {
+      const scr = sapData.screens[code];
+      if (!scr) return;
+      document.getElementById('sapCommandInput').value = `/n${code}`;
+      document.getElementById('simScreenTitle').innerText = scr.title;
+      document.getElementById('simActiveTcode').innerText = `TCODE: ${code}`;
+
+      const area = document.getElementById('simFieldsArea');
+      area.innerHTML = scr.sections.map(sec => `
+        <div class="bg-white border border-slate-300 rounded shadow-sm overflow-hidden">
+          <div class="bg-[#dce6f2] px-3 py-1.5 text-xs font-bold text-sapDark border-b border-slate-300">${sec.secTitle}</div>
+          <div class="p-3 grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+            ${sec.fields.map(f => `
+              <button onclick="inspectField('${f.label.replace(/'/g, "\\'")}', '${f.val.replace(/'/g, "\\'")}', '${f.descAr.replace(/'/g, "\\'")}')"
+                class="text-left p-2 rounded border border-slate-300 bg-amber-50/60 hover:bg-blue-50 hover:border-sapBlue transition flex justify-between items-center group" dir="ltr">
+                <div>
+                  <div class="text-[11px] text-slate-500 font-semibold">${f.label}</div>
+                  <div class="text-xs font-mono font-bold text-slate-900 mt-0.5">${f.val}</div>
+                </div>
+                <i class="fa-solid fa-circle-info text-slate-400 group-hover:text-sapBlue"></i>
+              </button>
+            `).join('')}
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function inspectField(label, val, descAr) {
+      document.getElementById('fieldInspectTitle').innerHTML = `<span class="ltr-code text-sapBlue">${label}</span>`;
+      document.getElementById('fieldInspectBody').innerHTML = `
+        <div class="bg-slate-100 p-2 rounded font-mono text-xs" dir="ltr">Sample Value: <strong>${val}</strong></div>
+        <p class="text-slate-800 font-medium leading-relaxed mt-2">${descAr}</p>
+      `;
+    }
+
+    function runCommand() {
+      const raw = document.getElementById('sapCommandInput').value.trim().toUpperCase().replace('/N', '').replace('/O', '');
+      if (sapData.screens[raw]) {
+        loadScreen(raw);
+      } else {
+        alert(`الكود ${raw} غير مضاف حالياً في المحاكي. الأكواد المتاحة في المحاكي هي: ME21N, MIGO, MM01`);
+      }
+    }
+
+    // 7. محرك الاختبارات (QCM)
+    function renderQcm() {
+      const container = document.getElementById('qcmContainer');
+      let correctCount = 0;
+
+      container.innerHTML = sapData.qcm.map((item, idx) => {
+        const userAns = userState.qcmAnswers[item.id];
+        const hasAnswered = userAns !== undefined;
+        if (hasAnswered && userAns === item.correct) correctCount++;
+
+        return `
+          <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200">
+            <h4 class="font-bold text-sm md:text-base text-sapDark mb-3">${idx + 1}. ${item.q}</h4>
+            <div class="space-y-2">
+              ${item.options.map((opt, oIdx) => {
+                let btnStyle = "border-slate-200 hover:bg-slate-50";
+                if (hasAnswered) {
+                  if (oIdx === item.correct) btnStyle = "border-emerald-500 bg-emerald-50 text-emerald-900 font-bold";
+                  else if (oIdx === userAns) btnStyle = "border-red-400 bg-red-50 text-red-800";
+                }
+                return `
+                  <button onclick="answerQcm('${item.id}', ${oIdx})" class="w-full text-right p-3 rounded-lg border text-xs md:text-sm transition flex justify-between items-center ${btnStyle}">
+                    <span>${opt}</span>
+                    ${hasAnswered && oIdx === item.correct ? '<i class="fa-solid fa-check text-emerald-600"></i>' : ''}
+                    ${hasAnswered && oIdx === userAns && userAns !== item.correct ? '<i class="fa-solid fa-xmark text-red-600"></i>' : ''}
+                  </button>
+                `;
+              }).join('')}
+            </div>
+            ${hasAnswered ? `
+              <div class="mt-3 p-3 bg-slate-50 border-r-4 border-sapBlue text-xs text-slate-700 rounded">
+                <strong>التعليل:</strong> ${item.explanation}
+              </div>
+            ` : ''}
+          </div>
+        `;
+      }).join('');
+
+      document.getElementById('qcmScoreBadge').innerText = `${correctCount} / ${sapData.qcm.length}`;
+    }
+
+    function answerQcm(qId, optionIdx) {
+      userState.qcmAnswers[qId] = optionIdx;
+      saveState();
+      renderQcm();
+    }
+
+    // 8. تحديث إحصائيات التقدم والنسخ الاحتياطي
+    function updateProgressUI() {
+      const totalLessons = sapData.lessons.length;
+      const doneLessons = userState.completedLessons.length;
+
+      const totalQcm = sapData.qcm.length;
+      let correctQcm = 0;
+      sapData.qcm.forEach(q => {
+        if (userState.qcmAnswers[q.id] === q.correct) correctQcm++;
+      });
+
+      const overallPercent = Math.round(((doneLessons + correctQcm) / (totalLessons + totalQcm)) * 100) || 0;
+
+      document.getElementById('headerProgressText').innerText = `${overallPercent}%`;
+      document.getElementById('headerProgressBar').style.width = `${overallPercent}%`;
+
+      document.getElementById('statLessons').innerText = `${doneLessons} / ${totalLessons}`;
+      document.getElementById('statQcm').innerText = `${correctQcm} / ${totalQcm}`;
+      document.getElementById('statTcodes').innerText = userState.savedTcodes.length;
+    }
+
+    function exportProgress() {
+      const str = JSON.stringify(userState);
+      const box = document.getElementById('backupJsonBox');
+      box.value = str;
+      box.select();
+      navigator.clipboard.writeText(str);
+      alert("تم نسخ كود التقدم! يمكنك إرساله لهاتفك ولصقه هناك.");
+    }
+
+    function importProgress() {
+      const raw = document.getElementById('backupJsonBox').value.trim();
+      if (!raw) return alert("المرجو لصق كود التقدم في المربع أولاً.");
+      try {
+        const parsed = JSON.parse(raw);
+        if (parsed.completedLessons && parsed.qcmAnswers) {
+          userState = parsed;
+          saveState();
+          initApp();
+          alert("تم استيراد تقدمك بنجاح!");
+        }
+      } catch (e) {
+        alert("كود غير صالح، تأكد من نسخ النص بالكامل.");
+      }
+    }
+
+    function resetProgress() {
+      if (confirm("هل أنت متأكد من رغبتك في مسح كل تقدمك؟")) {
+        userState = { completedLessons: [], qcmAnswers: {}, savedTcodes: [] };
+        saveState();
+        initApp();
+      }
+    }
+
+    // تشغيل التطبيق عند التحميل
+    function initApp() {
+      renderLessons();
+      renderTcodes();
+      loadScreen('ME21N');
+      renderQcm();
+      updateProgressUI();
+    }
+
+    window.addEventListener('DOMContentLoaded', initApp);
+  </script>
+</body>
+</html>

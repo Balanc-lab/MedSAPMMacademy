@@ -1,0 +1,10 @@
+{
+  "name": "SAP MM Academy",
+  "short_name": "SAP MM",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#1d2d3e",
+  "theme_color": "#0a6ed1",
+  "lang": "ar",
+  "dir": "rtl"
+}
